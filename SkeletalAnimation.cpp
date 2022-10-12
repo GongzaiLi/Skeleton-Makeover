@@ -23,6 +23,15 @@ float scene_scale;
 int tDuration;
 int timeStep;
 
+//	View Variables
+float cam_y = 1;
+float cam_x = 0;
+float cam_z = 10;
+float camera_movement_speed = 1;
+float angle = 0;
+float camera_rotation_speed = 3;
+float view_angle = 0;
+
 // ------A recursive function to traverse scene graph and render each mesh----------
 // Simplified version for rendering a skeleton mesh
 void render(const aiNode* node)
@@ -132,7 +141,7 @@ void initialise()
 	gluPerspective(40, 1, 1.0, 500.0);
 
 	//---- Load the model ------
-	scene = aiImportFile("./src/models/Test.bvh", aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone);
+	scene = aiImportFile("./src/models/Boxing.bvh", aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone);
 	if (scene == NULL) exit(1);
 	//printTreeInfo(scene->mRootNode);
 	//printAnimInfo(scene, 0);
@@ -161,12 +170,13 @@ void display()
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	gluLookAt(0, 0, 7, 0, 0, 0, 0, 1, 0);
+	gluLookAt(cam_x, cam_y, cam_z, 0, cam_y, 0, 0, 1, 0);
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPosn);
 
 	glPushMatrix();
 	   glScalef(scene_scale, scene_scale, scene_scale);
 	   glTranslatef(-xpos, 0, -zpos);   //Move model to origin
+	   glRotatef(view_angle, 0, 1, 0);
 	   render(scene->mRootNode);
 	glPopMatrix();
 
@@ -184,6 +194,75 @@ void update(int tick) {
 	glutPostRedisplay();
 }
 
+// Camera rotation
+void cameraRotation(int direction) {
+	view_angle += direction * camera_rotation_speed;
+	
+	if (view_angle >= 360) {
+		view_angle = 0;
+	}
+	else if (view_angle <= 0) {
+		view_angle = 360;
+	}
+}
+
+// Camera zoom
+void cameraZoom(int direction) {
+	//float move_x = -cam_x;
+	//float move_z = -cam_z;
+	//if (abs(move_x) > abs(move_z)) {
+	//	move_z /= abs(move_x);
+	//	move_x /= abs(move_x);
+	//}
+	//else {
+	//	move_x /= abs(move_z);
+	//	move_z /= abs(move_z);
+	//}
+
+
+	//float xDist = scene_center.x - cam_x;
+	//float yDist = scene_center.y - cam_y;
+	//float zDist = scene_center.z - cam_z;
+	//float distance = sqrt(pow(xDist, 2) + pow(yDist, 2) + pow(zDist, 2));
+	////if (distance > 1 || distance < 0)
+	////{
+		cout << cam_z << endl;
+
+		//cam_x += move_x * direction * camera_movement_speed;
+		cam_z += direction * camera_movement_speed;
+
+		if (cam_z <= 2) {
+			cam_z = 2;
+		}
+
+		if (cam_z >= 20) {
+			cam_z = 20;
+		}
+	//}
+}
+
+// Callback function for special keyboard events
+void special(int key, int x, int y)
+{
+	switch (key)
+	{
+	case GLUT_KEY_LEFT:
+		cameraRotation(1);
+		break;
+	case GLUT_KEY_RIGHT:
+		cameraRotation(-1);
+		break;
+	case GLUT_KEY_UP:
+		cameraZoom(-1);
+		break;
+	case GLUT_KEY_DOWN:
+		cameraZoom(1);
+		break;
+	}
+
+	glutPostRedisplay();
+}
+
 
 int main(int argc, char** argv)
 {
@@ -195,6 +274,8 @@ int main(int argc, char** argv)
 	initialise();
 	glutDisplayFunc(display);
 	glutTimerFunc(timeStep, update, 0);
+	glutSpecialFunc(special);
+
 
 	glutMainLoop();
 	aiReleaseImport(scene);

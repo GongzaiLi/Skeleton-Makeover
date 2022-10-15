@@ -23,12 +23,32 @@ aiVector3D scene_min, scene_max, scene_center;
 float scene_scale;
 int tDuration;
 int timeStep;
-bool toggleAnimation = true;
+bool toggleAnimation = false;
 bool toggleBackground = true;
 float PI = 3.14159265;
 float CDR = PI / 180.0;
 float lightPosn[4] = { -5, 10, 10, 1 };
 float shadowMat[16] = { lightPosn[1],0,0,0, -lightPosn[0],0,-lightPosn[2],-1,0,0,lightPosn[1],0, 0,0,0,lightPosn[1] };
+aiVector3D left_foot_vec;
+int tick = 0;
+int tick_step = 1;
+
+// ball
+float ball_x = 0.6;
+float ball_y = 0.09;
+float ball_z = 0.4;
+
+float init_ball = true;
+float reset_ball = false;
+float isKicked = false;
+
+
+float ball_time = 0;
+float ball_Veloctiy = 10;
+float ball_Vx = ball_Veloctiy * cos(45 * CDR) * cos(45 * CDR);;
+float ball_Vy = ball_Veloctiy * sin(45 * CDR) * cos(45 * CDR);;
+float ball_Vz = ball_Veloctiy * cos(45 * CDR);
+float gravity = 9.81;
 
 //	View Variables
 float cam_y = 1;
@@ -234,23 +254,30 @@ void render(const aiNode* node)
 		else if (node->mName == aiString("RightLowLeg") || node->mName == aiString("LeftLowLeg")) {
 			renderLowLeg();
 		}
-		else if (node->mName == aiString("RightFoot") || node->mName == aiString("LeftFoot")) {
-			//aiNode* parent = node->mParent;
-			//aiMatrix4x4 matrices[4];
-			//matrices[3] = node->mTransformation;
-			//int index = 2;
-			//while (parent != NULL) {
-			//	matrices[index] = parent->mTransformation;
-			//	parent = parent->mParent;
-			//	index--;
-			//}
-			//aiMatrix4x4 worldMatrix = matrices[0];
-			//for (int i = 1; i < 4; i++)
-			//{
-			//	worldMatrix *= matrices[i];
-			//}
-			//footVec = aiVector3D(0, 0, 0);  ÕÒµØ·½µÄ
-			//footVec *= worldMatrix;
+		else if (node->mName == aiString("RightFoot")) {
+			renderFoot();
+		}
+		else if (node->mName == aiString("LeftFoot")) {
+			aiNode* parent = node->mParent;
+			aiMatrix4x4 matrices[4];
+			matrices[3] = node->mTransformation;
+			int index = 2;
+
+			while (parent != NULL) {
+				matrices[index] = parent->mTransformation;
+				parent = parent->mParent;
+				index--;
+			}
+
+			aiMatrix4x4 worldMatrix = matrices[0];
+
+			for (int i = 1; i < 4; i++)
+			{
+				worldMatrix *= matrices[i];
+			}
+
+			left_foot_vec = aiVector3D(0, 0, 0);
+			left_foot_vec *= worldMatrix;
 			renderFoot();
 		}
 		else if (node->mName == aiString("RightUpArm") || node->mName == aiString("LeftUpArm")) {
@@ -263,6 +290,7 @@ void render(const aiNode* node)
 			renderNeck();
 		}
 		else if (node->mName == aiString("Head")) {
+			
 			renderHead();
 		}
 		else
@@ -358,8 +386,6 @@ void initialise()
 	timeStep = 1000.0 / fps; //In milliseconds
 
 
-	// todo texture
-
 	get_bounding_box(scene, &scene_min, &scene_max);
 	scene_center = (scene_min + scene_max) * 0.5f;
 	aiVector3D scene_diag = scene_max - scene_center;
@@ -410,7 +436,7 @@ void drawBackground()
 	glDisable(GL_TEXTURE_2D);
 }
 
-void dispayScene()
+void displayScene()
 {
 
 	glPushMatrix();
@@ -421,7 +447,20 @@ void dispayScene()
 	
 }
 
-void dispayModel()
+void drawBall() {
+	glTranslatef(ball_x, ball_y, ball_z);
+	glutSolidSphere(0.1, 20, 20);
+}
+
+void displatBall()
+{
+	glPushMatrix();
+		glColor3f(1, 0, 0);
+		drawBall();
+	glPopMatrix();
+}
+
+void displayModel()
 {
 	glPushMatrix();
 		glTranslatef(0, -0.1, 0);
@@ -433,7 +472,7 @@ void dispayModel()
 }
 
 
-void dispayModelShadow()
+void displayModelShadow()
 {
 
 	glDisable(GL_LIGHTING);
@@ -444,10 +483,28 @@ void dispayModelShadow()
 		glMultMatrixf(shadowMat);
 		glScalef(scene_scale, scene_scale, scene_scale);
 		glTranslatef(-scene_center.x, -scene_center.y, -scene_center.z);
-		glColor4f(0.1, 0.1, 0.1, 1);
-		render(scene->mRootNode);
+	glColor4f(0.1, 0.1, 0.1, 1);
+	render(scene->mRootNode);
 	glPopMatrix();
 
+	glEnable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
+
+}
+
+void displayBallShadow()
+{
+
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+
+	glPushMatrix();
+	glTranslatef(0, 0.05, 0);
+	glMultMatrixf(shadowMat);
+	glColor4f(0.1, 0.1, 0.1, 1);
+	drawBall();
+	glPopMatrix();
+	
 	glEnable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
 
@@ -455,12 +512,11 @@ void dispayModelShadow()
 //------The main display function---------
 void display()
 {
-	
+
 	aiMatrix4x4 m = scene->mRootNode->mTransformation;
 	float xpos = m.a4;   //Root joint's position in world space
 	float ypos = m.b4;
 	float zpos = m.c4;
-
 
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -471,28 +527,75 @@ void display()
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPosn);
 
 	glPushMatrix();
-		glTranslatef(-scene_center.x, -scene_center.y, -scene_center.z);
-		glRotatef(view_angle, 0, 1, 0);
-		glTranslatef(scene_center.x, scene_center.y, scene_center.z);
-		dispayScene();
-		dispayModel();
-		dispayModelShadow();
-
-		
-
+	glTranslatef(-scene_center.x, -scene_center.y, -scene_center.z);
+	glRotatef(view_angle, 0, 1, 0);
+	glTranslatef(scene_center.x, scene_center.y, scene_center.z);
+	displayScene();
+	displayModel();
+	displayModelShadow();
+	displatBall();
+	displayBallShadow();
 	glPopMatrix();
 
 	glutSwapBuffers();
 }
 
-//update
-void update(int tick) {
+void updateBall()
+{
 
-	if (tick > tDuration) return;
-	//cout << tick << endl;
-	updateNodeMatrices(tick);
-	tick++;
-	glutTimerFunc(timeStep, update, tick);
+	if (reset_ball) {
+		ball_x = 0.6;
+		ball_y = 0.09;
+		ball_z = 0.4;
+
+		isKicked = false;
+
+		init_ball = true;
+
+
+		//ball_time = 0;
+		ball_Vx = ball_Veloctiy * cos(45 * CDR) * cos(45 * CDR);;
+		ball_Vy = ball_Veloctiy * sin(45 * CDR) * cos(45 * CDR);;
+		ball_Vz = ball_Veloctiy * cos(45 * CDR);
+	} {
+		ball_x += ball_Vx / 1000 * timeStep;
+		ball_y += ball_Vy / 1000 * timeStep;
+		ball_z += ball_Vz / 1000 * timeStep;
+
+		ball_Vy -= gravity / 1000 * timeStep;
+	}
+
+}
+
+//update
+void update(int value) {
+	if (tick > tDuration) {
+		tick = 0;
+		reset_ball = true;
+	}
+	//if (tick <= 0) tick_step = 1;
+
+	if (toggleAnimation) {
+		glutTimerFunc(timeStep, update, 0);
+	}
+	else {
+		//cout << tick << endl;
+		updateNodeMatrices(tick);
+		tick += tick_step;
+		glutTimerFunc(timeStep, update, tick);
+
+		if ((left_foot_vec.x * scene_scale) >= ball_x + 0.2 && (left_foot_vec.z * scene_scale) >= ball_z - 0.2) {
+			isKicked = true;
+			reset_ball = false;
+			
+		}
+
+		if (isKicked) {
+			updateBall();
+		}
+	}
+
+	
 	glutPostRedisplay();
 }
 
@@ -556,7 +659,11 @@ void keyboard(unsigned char key, int x, int y)
 	case '1':
 		toggleBackground = !toggleBackground;
 		break;
+	case 'r':
+		reset_ball = true;
+		break;
 	}
+	
 	glutPostRedisplay();
 }
 

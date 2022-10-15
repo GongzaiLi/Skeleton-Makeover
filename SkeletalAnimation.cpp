@@ -15,6 +15,7 @@ using namespace std;
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include "assimp_extras.h"
+#include "loadTGA.h"
 
 //----------Globals----------------------------
 const aiScene* scene = NULL;
@@ -22,18 +23,54 @@ aiVector3D scene_min, scene_max, scene_center;
 float scene_scale;
 int tDuration;
 int timeStep;
+bool toggleAnimation = true;
+bool toggleBackground = true;
+float PI = 3.14159265;
+float CDR = PI / 180.0;
+float lightPosn[4] = { -5, 10, 10, 1 };
+float shadowMat[16] = { lightPosn[1],0,0,0, -lightPosn[0],0,-lightPosn[2],-1,0,0,lightPosn[1],0, 0,0,0,lightPosn[1] };
 
 //	View Variables
 float cam_y = 1;
 float cam_x = 0;
 float cam_z = 10;
 float camera_movement_speed = 1;
-float angle = 0;
 float camera_rotation_speed = 3;
 float view_angle = 0;
 
-// toggle
-bool toggleAnimation = true;
+// texture
+const int TEXTURES_NUM = 2;
+GLuint texID[TEXTURES_NUM]; // init textures number
+string texture_path = "./src/textures/";
+const char* textures[TEXTURES_NUM] = {"floor.tga", "background_3.tga"};
+
+// upload texture
+void loadTexture()
+{
+	glGenTextures(TEXTURES_NUM, texID);
+
+
+	glBindTexture(GL_TEXTURE_2D, texID[0]);
+	loadTGA(texture_path + textures[0]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glBindTexture(GL_TEXTURE_2D, texID[1]);
+	loadTGA(texture_path + textures[1]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+	
+
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);//GL_REPLACE  GL_MODULATE
+
+}
+
 
 // Rendering a skeleton mesh
 void renderSkeleton(const aiNode* node) {
@@ -44,7 +81,7 @@ void renderSkeleton(const aiNode* node) {
 
 	meshIndex = node->mMeshes[0];          //Get the mesh indices from the current node
 	mesh = scene->mMeshes[meshIndex];    //Using mesh index, get the mesh object
-	glColor4fv(materialCol);   //Default material colour
+	//glColor4fv(materialCol);   //Default material colour
 
 	//Draw the mesh in the current node
 	for (int k = 0; k < mesh->mNumFaces; k++)
@@ -64,7 +101,6 @@ void renderSkeleton(const aiNode* node) {
 // render Chest
 void renderChest() {
 	glPushMatrix();
-		glColor3f(0, 0.7, 0.7);
 		glTranslatef(0, 7, 0);
 		glScalef(14, 20, 4);
 		glutSolidCube(1);
@@ -74,7 +110,6 @@ void renderChest() {
 // render Hip
 void renderHips() {
 	glPushMatrix();
-		glColor3f(0, 0.7, 0.7);
 		glScalef(14, 4, 4);
 		glutSolidCube(1);
 	glPopMatrix();
@@ -83,7 +118,6 @@ void renderHips() {
 // render Collar
 void renderCollar(int side) {
 	glPushMatrix();
-		glColor3f(0, 0.7, 0.7);
 		glTranslatef(side * 7, 0, 0);
 		glutSolidSphere(2.5, 20, 20);
 	glPopMatrix();
@@ -92,14 +126,12 @@ void renderCollar(int side) {
 // render up leg
 void renderUpLeg() {
 	glPushMatrix();
-		glColor3f(0, 0.7, 0.7);
 		glTranslatef(0, -9, 0);
 		glScalef(3, 18, 3);
 		glutSolidCube(1);
 	glPopMatrix();
 
 	glPushMatrix();
-		glColor3f(0, 0.7, 0.7);
 		glTranslatef(0, -18, 0);
 		glutSolidSphere(2.5, 20, 20);
 	glPopMatrix();
@@ -108,7 +140,6 @@ void renderUpLeg() {
 // render low leg
 void renderLowLeg() {
 	glPushMatrix();
-		glColor3f(0, 0.7, 0.7);
 		glTranslatef(0, -9, 0);
 		glScalef(3, 18, 3);
 		glutSolidCube(1);
@@ -118,7 +149,6 @@ void renderLowLeg() {
 // reder right foot
 void renderFoot() {
 	glPushMatrix();
-		glColor3f(0, 0.7, 0.7);
 		glTranslatef(0, -1.5, 2);
 		glScalef(3, 3, 7);
 		glutSolidCube(1);
@@ -128,14 +158,12 @@ void renderFoot() {
 //  reder Up Arm
 void renderUpArm() {
 	glPushMatrix();
-		glColor3f(0, 0.7, 0.7);
 		glTranslatef(0, -6.5, 0);
 		glScalef(2.5, 13, 2.5);
 		glutSolidCube(1);
 	glPopMatrix();
 
 	glPushMatrix();
-		glColor3f(0, 0.7, 0.7);
 		glTranslatef(0, -13, 0);
 		glutSolidSphere(2.5, 20, 20);
 	glPopMatrix();
@@ -144,14 +172,12 @@ void renderUpArm() {
 // render Hand
 void renderHand() {
 	glPushMatrix();
-		glColor3f(0, 0.7, 0.7);
 		glTranslatef(0, 0, 0);
 		glScalef(2.5, 14, 2.5);
 		glutSolidCube(1);
 	glPopMatrix();
 
 	glPushMatrix();
-		glColor3f(0, 0.7, 0.7);
 		glTranslatef(0, -8, 0);
 		glutSolidSphere(3, 20, 20);
 
@@ -162,7 +188,6 @@ void renderHand() {
 
 void renderNeck() {
 	glPushMatrix();
-		glColor3f(0, 0.7, 0.7);
 		glTranslatef(0, 3, 0);
 		glRotatef(90, 1, 0, 0);
 		glutSolidCylinder(1.5, 5, 50, 10);
@@ -171,7 +196,6 @@ void renderNeck() {
 
 void renderHead() {
 	glPushMatrix();
-		glColor3f(0, 0.7, 0.7);
 		glTranslatef(0, 2, 0);
 		glutSolidSphere(6, 20, 20);
 	glPopMatrix();
@@ -301,6 +325,8 @@ void updateNodeMatrices(int tick)
 //--------------------OpenGL initialization------------------------
 void initialise()
 {
+	loadTexture();
+
 	float ambient[4] = { 0.2, 0.2, 0.2, 1.0 };  //Ambient light
 	float white[4] = { 1, 1, 1, 1 };		    //Light's colour
 	float black[4] = { 0, 0, 0, 1 };
@@ -323,27 +349,120 @@ void initialise()
 	if (scene == NULL) exit(1);
 	//printTreeInfo(scene->mRootNode);
 	//printAnimInfo(scene, 0);
+	
+	// animation = scene->mAnimations[0];
 
 	tDuration = scene->mAnimations[0]->mDuration;
 
 	float fps = scene->mAnimations[0]->mTicksPerSecond;
 	timeStep = 1000.0 / fps; //In milliseconds
 
+
+	// todo texture
+
 	get_bounding_box(scene, &scene_min, &scene_max);
 	scene_center = (scene_min + scene_max) * 0.5f;
 	aiVector3D scene_diag = scene_max - scene_center;
 	scene_scale = 1.0 / scene_diag.Length();
 }
+void drawFloor()
+{
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, texID[0]);
+	glColor3f(1, 1, 1);
+	glBegin(GL_QUADS);
+	for (int i = -5; i < 5; i ++)
+	{
+		for (int j = -5; j < 5; j ++)
+		{
+			glNormal3f(0, 1, 0);
+			glTexCoord2f(0.0, 0.0); 
+			glVertex3f(i, 0.01, j);
+			glTexCoord2f(10.0, 0.0); 
+			glVertex3f(i, 0.01, j + 1);
+			glTexCoord2f(10.0, 10.0); 
+			glVertex3f(i + 1, 0.01, j + 1);
+			glTexCoord2f(0.0, 10.0); 
+			glVertex3f(i + 1, 0.01, j);
+		}
+	}
+	glEnd();
+	glDisable(GL_TEXTURE_2D);
+}
+
+void drawBackground()
+{
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, texID[1]);
+	glColor3f(1, 1, 1);
+	glBegin(GL_QUADS);
+	glNormal3f(0, 0, -1);
+		glTexCoord2f(0.0, 1.0); 
+		glVertex3f(-5, 10, -5);
+		glTexCoord2f(0.0, 0.0); 
+		glVertex3f(-5, 0, -5);
+		glTexCoord2f(1.0, 0.0); 
+		glVertex3f(5, 0, -5);
+		glTexCoord2f(1.0, 1.0); 
+		glVertex3f(5, 10, -5);
+	glEnd();
+	
+	glDisable(GL_TEXTURE_2D);
+}
+
+void dispayScene()
+{
+
+	glPushMatrix();
+		glTranslatef(0, 0, 2);
+		drawFloor();
+		if (toggleBackground) drawBackground();
+	glPopMatrix();
+	
+}
+
+void dispayModel()
+{
+	glPushMatrix();
+		glTranslatef(0, -0.1, 0);
+		glScalef(scene_scale, scene_scale, scene_scale);
+		glTranslatef(-scene_center.x, -scene_center.y, -scene_center.z);
+		glColor3f(0, 0.7, 0.7);
+		render(scene->mRootNode);
+	glPopMatrix();
+}
 
 
+void dispayModelShadow()
+{
+
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+
+	glPushMatrix();
+		glTranslatef(0, 0.05, 0);
+		glMultMatrixf(shadowMat);
+		glScalef(scene_scale, scene_scale, scene_scale);
+		glTranslatef(-scene_center.x, -scene_center.y, -scene_center.z);
+		glColor4f(0.1, 0.1, 0.1, 1);
+		render(scene->mRootNode);
+	glPopMatrix();
+
+	glEnable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
+
+}
 //------The main display function---------
 void display()
 {
-	float lightPosn[4] = { -5, 10, 10, 1 };
+	
 	aiMatrix4x4 m = scene->mRootNode->mTransformation;
 	float xpos = m.a4;   //Root joint's position in world space
 	float ypos = m.b4;
 	float zpos = m.c4;
+
+
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glMatrixMode(GL_MODELVIEW);
@@ -352,10 +471,15 @@ void display()
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPosn);
 
 	glPushMatrix();
-	   glScalef(scene_scale, scene_scale, scene_scale);
-	   glTranslatef(-xpos, 0, -zpos);   //Move model to origin
-	   glRotatef(view_angle, 0, 1, 0);
-	   render(scene->mRootNode);
+		glTranslatef(-scene_center.x, -scene_center.y, -scene_center.z);
+		glRotatef(view_angle, 0, 1, 0);
+		glTranslatef(scene_center.x, scene_center.y, scene_center.z);
+		dispayScene();
+		dispayModel();
+		dispayModelShadow();
+
+		
+
 	glPopMatrix();
 
 	glutSwapBuffers();
@@ -386,24 +510,6 @@ void cameraRotation(int direction) {
 
 // Camera zoom
 void cameraZoom(int direction) {
-	//float move_x = -cam_x;
-	//float move_z = -cam_z;
-	//if (abs(move_x) > abs(move_z)) {
-	//	move_z /= abs(move_x);
-	//	move_x /= abs(move_x);
-	//}
-	//else {
-	//	move_x /= abs(move_z);
-	//	move_z /= abs(move_z);
-	//}
-
-
-	//float xDist = scene_center.x - cam_x;
-	//float yDist = scene_center.y - cam_y;
-	//float zDist = scene_center.z - cam_z;
-	//float distance = sqrt(pow(xDist, 2) + pow(yDist, 2) + pow(zDist, 2));
-	////if (distance > 1 || distance < 0)
-	////{
 		cout << cam_z << endl;
 
 		//cam_x += move_x * direction * camera_movement_speed;
@@ -416,7 +522,6 @@ void cameraZoom(int direction) {
 		if (cam_z >= 20) {
 			cam_z = 20;
 		}
-	//}
 }
 
 // Callback function for special keyboard events
@@ -448,6 +553,9 @@ void keyboard(unsigned char key, int x, int y)
 	case ' ':
 		toggleAnimation = !toggleAnimation;
 		break;
+	case '1':
+		toggleBackground = !toggleBackground;
+		break;
 	}
 	glutPostRedisplay();
 }
@@ -459,7 +567,7 @@ int main(int argc, char** argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(800, 800);
-	glutCreateWindow("Skeleton Animation");
+	glutCreateWindow("Skeleton Animation-gli65");
 
 	initialise();
 	glutDisplayFunc(display);

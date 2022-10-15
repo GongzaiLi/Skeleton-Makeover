@@ -101,7 +101,6 @@ void renderSkeleton(const aiNode* node) {
 
 	meshIndex = node->mMeshes[0];          //Get the mesh indices from the current node
 	mesh = scene->mMeshes[meshIndex];    //Using mesh index, get the mesh object
-	//glColor4fv(materialCol);   //Default material colour
 
 	//Draw the mesh in the current node
 	for (int k = 0; k < mesh->mNumFaces; k++)
@@ -290,7 +289,6 @@ void render(const aiNode* node)
 			renderNeck();
 		}
 		else if (node->mName == aiString("Head")) {
-			
 			renderHead();
 		}
 		else
@@ -509,6 +507,7 @@ void displayBallShadow()
 	glEnable(GL_TEXTURE_2D);
 
 }
+
 //------The main display function---------
 void display()
 {
@@ -527,14 +526,15 @@ void display()
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPosn);
 
 	glPushMatrix();
-	glTranslatef(-scene_center.x, -scene_center.y, -scene_center.z);
-	glRotatef(view_angle, 0, 1, 0);
-	glTranslatef(scene_center.x, scene_center.y, scene_center.z);
-	displayScene();
-	displayModel();
-	displayModelShadow();
-	displatBall();
-	displayBallShadow();
+		glTranslatef(-scene_center.x, -scene_center.y, -scene_center.z);
+		glRotatef(view_angle, 0, 1, 0);
+		glTranslatef(scene_center.x, scene_center.y, scene_center.z);
+
+		displayScene();
+		displayModel();
+		displayModelShadow();
+		displatBall();
+		displayBallShadow();
 	glPopMatrix();
 
 	glutSwapBuffers();
@@ -545,18 +545,13 @@ void updateBall()
 
 	if (reset_ball) {
 		ball_x = 0.6;
-		ball_y = 0.09;
+		ball_y = 0.08;
 		ball_z = 0.4;
 
 		isKicked = false;
-
 		init_ball = true;
-
-
-		//ball_time = 0;
-		ball_Vx = ball_Veloctiy * cos(45 * CDR) * cos(45 * CDR);;
+		
 		ball_Vy = ball_Veloctiy * sin(45 * CDR) * cos(45 * CDR);;
-		ball_Vz = ball_Veloctiy * cos(45 * CDR);
 	} {
 		ball_x += ball_Vx / 1000 * timeStep;
 		ball_y += ball_Vy / 1000 * timeStep;
@@ -582,8 +577,7 @@ void update(int value) {
 		//cout << tick << endl;
 		updateNodeMatrices(tick);
 		tick += tick_step;
-		glutTimerFunc(timeStep, update, tick);
-
+		
 		if ((left_foot_vec.x * scene_scale) >= ball_x + 0.2 && (left_foot_vec.z * scene_scale) >= ball_z - 0.2) {
 			isKicked = true;
 			reset_ball = false;
@@ -593,6 +587,7 @@ void update(int value) {
 		if (isKicked) {
 			updateBall();
 		}
+		glutTimerFunc(timeStep, update, tick);
 	}
 
 	
@@ -613,9 +608,7 @@ void cameraRotation(int direction) {
 
 // Camera zoom
 void cameraZoom(int direction) {
-		cout << cam_z << endl;
-
-		//cam_x += move_x * direction * camera_movement_speed;
+		//cout << cam_z << endl;
 		cam_z += direction * camera_movement_speed;
 
 		if (cam_z <= 2) {
@@ -659,7 +652,7 @@ void keyboard(unsigned char key, int x, int y)
 	case '1':
 		toggleBackground = !toggleBackground;
 		break;
-	case 'r':
+	case 'b':
 		reset_ball = true;
 		break;
 	}

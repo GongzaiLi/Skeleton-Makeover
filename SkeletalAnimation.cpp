@@ -64,6 +64,11 @@ GLuint texID[TEXTURES_NUM]; // init textures number
 string texture_path = "./src/textures/";
 const char* textures[TEXTURES_NUM] = { "floor.tga", "background_3.tga" };
 
+
+GLUquadric* q;
+float theta = 20.0;  //walking,leg,arm,and tails'rotating angle
+
+
 // upload texture
 void loadTexture()
 {
@@ -351,6 +356,8 @@ void updateNodeMatrices(int tick)
 //--------------------OpenGL initialization------------------------
 void initialise()
 {
+	q = gluNewQuadric();
+
 	loadTexture();
 
 	float ambient[4] = { 0.2, 0.2, 0.2, 1.0 };  //Ambient light
@@ -458,6 +465,102 @@ void drawTree()
 	glPopMatrix();
 }
 
+void drawPanda()
+{
+
+	glPushMatrix();                        //body
+		glColor3f(1, 1, 1);
+		glTranslatef(30.0, 4, 0.0);
+		glRotatef(-90.0, 0., 1., 0.);
+		gluCylinder(q, 2.0, 2.0, 4, 20, 5);
+		glTranslatef(0.0, 0.0, 4);
+		gluDisk(q, 0.0, 2.0, 20, 4);
+		glTranslatef(0.0, 0.0, -4);
+		gluDisk(q, 0.0, 2.0, 20, 4);
+	glPopMatrix();
+
+
+	glPushMatrix();
+		glColor3f(1, 1, 1);
+		glTranslatef(25, 4, 0.0);                  //head
+		glutSolidSphere(1.5, 20, 20);
+
+		glPushMatrix();
+			glColor3f(0, 0, 0);
+			glTranslatef(0, 1.2, -1);                  //ear
+			glutSolidSphere(0.5, 20, 20);
+		glPopMatrix();
+
+		glPushMatrix();
+			glColor3f(0, 0, 0);
+			glTranslatef(0, 1.2, 1);                  //ear
+			glutSolidSphere(0.5, 20, 20);
+		glPopMatrix();
+
+		glPushMatrix();
+			glColor3f(0, 0, 0);
+			glTranslatef(-1.2, 0.8, -0.5);                  //eye
+			glutSolidSphere(0.2, 20, 20);
+		glPopMatrix();
+
+		glPushMatrix();
+			glColor3f(0, 0, 0);
+			glTranslatef(-1.2, 0.8, 0.5);                 //eye
+			glutSolidSphere(0.2, 20, 20);
+		glPopMatrix();
+
+		glPushMatrix();
+		glColor3f(0, 0, 0);
+			glTranslatef(-1.5, 0.0, 0);                 //eye
+			glutSolidSphere(0.15, 20, 20);
+		glPopMatrix();
+
+	glPopMatrix();
+
+	
+	glPushMatrix();                       //legs
+		glColor3f(1, 1, 1);
+		glTranslatef(27, 1, 0.5);
+		glScalef(0.5, 2, 0.5);
+		glutSolidCube(1);
+	glPopMatrix();
+
+	
+	glPushMatrix();                          //legs
+		glColor3f(1, 1, 1);
+		glTranslatef(27, 1, -0.5);
+		glScalef(0.5, 2, 0.5);
+		glutSolidCube(1);
+	glPopMatrix();
+
+	
+	glPushMatrix();                          //legs
+		glColor3f(1, 1, 1);
+		glTranslatef(29.5, 1, 0.5);
+		glScalef(0.5, 2, 0.5);
+		glutSolidCube(1);
+	glPopMatrix();
+
+	
+	glPushMatrix();                          //legs
+		glColor3f(1, 1, 1);
+		glTranslatef(29.5, 1, -0.5);
+		glScalef(0.5, 2, 0.5);
+		glutSolidCube(1);
+	glPopMatrix();
+
+	
+	glPushMatrix();                          //tail
+		glColor3f(1, 1, 1);
+		glTranslatef(30, 4, 0);
+		glRotatef(theta, 0, 1, 0);
+		glRotatef(-90, 0, 0, 1);
+		glScalef(0.5, 3, 0.5);
+		glutSolidCube(1);
+	glPopMatrix();
+
+}
+
 void displayScene()
 {
 
@@ -472,6 +575,49 @@ void displayScene()
 		glScalef(0.7, 0.7, 0.7);
 		drawTree();
 	glPopMatrix();
+	
+	glPushMatrix();
+		glTranslatef(0, 0, -1);
+		glScalef(0.1, 0.1, 0.1);
+		drawPanda();
+	glPopMatrix();
+
+	glPushMatrix();
+		glTranslatef(0, 0, 0);
+		glScalef(0.1, 0.1, 0.1);
+		drawPanda();
+	glPopMatrix();
+
+	glPushMatrix();
+		glTranslatef(0, 0, 1);
+		glScalef(0.1, 0.1, 0.1);
+		drawPanda();
+	glPopMatrix();
+
+	glPushMatrix();
+		glTranslatef(0, 0, 2);
+		glScalef(0.1, 0.1, 0.1);
+		drawPanda();
+	glPopMatrix();
+
+	glPushMatrix();
+		glTranslatef(0, 0, 3);
+		glScalef(0.1, 0.1, 0.1);
+		drawPanda();
+	glPopMatrix();
+
+	glPushMatrix();
+		glTranslatef(0, 0, 4);
+		glScalef(0.1, 0.1, 0.1);
+		drawPanda();
+	glPopMatrix();
+
+	glPushMatrix();
+		glTranslatef(0, 0, 5);
+		glScalef(0.1, 0.1, 0.1);
+		drawPanda();
+	glPopMatrix();
+
 
 }
 
@@ -483,8 +629,8 @@ void drawBall() {
 void displatBall()
 {
 	glPushMatrix();
-	glColor3f(1, 0, 0);
-	drawBall();
+		glColor3f(1, 0, 0);
+		drawBall();
 	glPopMatrix();
 }
 

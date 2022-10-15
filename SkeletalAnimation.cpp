@@ -32,15 +32,156 @@ float angle = 0;
 float camera_rotation_speed = 3;
 float view_angle = 0;
 
+// toggle
+bool toggleAnimation = true;
+
+// Rendering a skeleton mesh
+void renderSkeleton(const aiNode* node) {
+	aiMesh* mesh;
+	int meshIndex;
+	float materialCol[4] = { 0, 0, 1, 1 };
+	aiFace* face;
+
+	meshIndex = node->mMeshes[0];          //Get the mesh indices from the current node
+	mesh = scene->mMeshes[meshIndex];    //Using mesh index, get the mesh object
+	glColor4fv(materialCol);   //Default material colour
+
+	//Draw the mesh in the current node
+	for (int k = 0; k < mesh->mNumFaces; k++)
+	{
+		face = &mesh->mFaces[k];
+		glBegin(GL_TRIANGLES);
+		for (int i = 0; i < face->mNumIndices; i++) {
+			int vertexIndex = face->mIndices[i];
+			if (mesh->HasNormals())
+				glNormal3fv(&mesh->mNormals[vertexIndex].x);
+			glVertex3fv(&mesh->mVertices[vertexIndex].x);
+		}
+		glEnd();
+	}
+}
+
+// render Chest
+void renderChest() {
+	glPushMatrix();
+		glColor3f(0, 0.7, 0.7);
+		glTranslatef(0, 7, 0);
+		glScalef(14, 20, 4);
+		glutSolidCube(1);
+	glPopMatrix();
+}
+
+// render Hip
+void renderHips() {
+	glPushMatrix();
+		glColor3f(0, 0.7, 0.7);
+		glScalef(14, 4, 4);
+		glutSolidCube(1);
+	glPopMatrix();
+}
+
+// render Collar
+void renderCollar(int side) {
+	glPushMatrix();
+		glColor3f(0, 0.7, 0.7);
+		glTranslatef(side * 7, 0, 0);
+		glutSolidSphere(2.5, 20, 20);
+	glPopMatrix();
+}
+
+// render up leg
+void renderUpLeg() {
+	glPushMatrix();
+		glColor3f(0, 0.7, 0.7);
+		glTranslatef(0, -9, 0);
+		glScalef(3, 18, 3);
+		glutSolidCube(1);
+	glPopMatrix();
+
+	glPushMatrix();
+		glColor3f(0, 0.7, 0.7);
+		glTranslatef(0, -18, 0);
+		glutSolidSphere(2.5, 20, 20);
+	glPopMatrix();
+}
+
+// render low leg
+void renderLowLeg() {
+	glPushMatrix();
+		glColor3f(0, 0.7, 0.7);
+		glTranslatef(0, -9, 0);
+		glScalef(3, 18, 3);
+		glutSolidCube(1);
+	glPopMatrix();
+}
+
+// reder right foot
+void renderFoot() {
+	glPushMatrix();
+		glColor3f(0, 0.7, 0.7);
+		glTranslatef(0, -1.5, 2);
+		glScalef(3, 3, 7);
+		glutSolidCube(1);
+	glPopMatrix();
+}
+
+//  reder Up Arm
+void renderUpArm() {
+	glPushMatrix();
+		glColor3f(0, 0.7, 0.7);
+		glTranslatef(0, -6.5, 0);
+		glScalef(2.5, 13, 2.5);
+		glutSolidCube(1);
+	glPopMatrix();
+
+	glPushMatrix();
+		glColor3f(0, 0.7, 0.7);
+		glTranslatef(0, -13, 0);
+		glutSolidSphere(2.5, 20, 20);
+	glPopMatrix();
+}
+
+// render Hand
+void renderHand() {
+	glPushMatrix();
+		glColor3f(0, 0.7, 0.7);
+		glTranslatef(0, 0, 0);
+		glScalef(2.5, 14, 2.5);
+		glutSolidCube(1);
+	glPopMatrix();
+
+	glPushMatrix();
+		glColor3f(0, 0.7, 0.7);
+		glTranslatef(0, -8, 0);
+		glutSolidSphere(3, 20, 20);
+
+	glPopMatrix();
+
+
+}
+
+void renderNeck() {
+	glPushMatrix();
+		glColor3f(0, 0.7, 0.7);
+		glTranslatef(0, 3, 0);
+		glRotatef(90, 1, 0, 0);
+		glutSolidCylinder(1.5, 5, 50, 10);
+	glPopMatrix();
+}
+
+void renderHead() {
+	glPushMatrix();
+		glColor3f(0, 0.7, 0.7);
+		glTranslatef(0, 2, 0);
+		glutSolidSphere(6, 20, 20);
+	glPopMatrix();
+}
+
 // ------A recursive function to traverse scene graph and render each mesh----------
 // Simplified version for rendering a skeleton mesh
 void render(const aiNode* node)
 {
 	aiMatrix4x4 m = node->mTransformation;
-	aiMesh* mesh;
-	aiFace* face;
-	float materialCol[4] = { 1, 0, 1, 1 };
-	int meshIndex;
 
 	m.Transpose();   //Convert to column-major order
 	glPushMatrix();
@@ -50,22 +191,59 @@ void render(const aiNode* node)
 	//Skeleton meshes are always triangle meshes
 	if(node->mNumMeshes > 0)
 	{
-		meshIndex = node->mMeshes[0];          //Get the mesh indices from the current node
-		mesh = scene->mMeshes[meshIndex];    //Using mesh index, get the mesh object
-		glColor4fv(materialCol);   //Default material colour
-
-		//Draw the mesh in the current node
-		for (int k = 0; k < mesh->mNumFaces; k++)
+		if (node->mName == aiString("Chest")) 
 		{
-			face = &mesh->mFaces[k];
-			glBegin(GL_TRIANGLES);
-			for (int i = 0; i < face->mNumIndices; i++) {
-				int vertexIndex = face->mIndices[i];
-				if (mesh->HasNormals())
-					glNormal3fv(&mesh->mNormals[vertexIndex].x);
-				glVertex3fv(&mesh->mVertices[vertexIndex].x);
-			}
-			glEnd();
+			renderChest();
+		}
+		else if (node->mName == aiString("Hips")) {
+			renderHips();
+		}
+		else if (node->mName == aiString("RightCollar")) {
+			renderCollar(-1);
+		}
+		else if (node->mName == aiString("LeftCollar")) {
+			renderCollar(1);
+		}
+		else if (node->mName == aiString("RightUpLeg") || node->mName == aiString("LeftUpLeg")) {
+			renderUpLeg();
+		}
+		else if (node->mName == aiString("RightLowLeg") || node->mName == aiString("LeftLowLeg")) {
+			renderLowLeg();
+		}
+		else if (node->mName == aiString("RightFoot") || node->mName == aiString("LeftFoot")) {
+			//aiNode* parent = node->mParent;
+			//aiMatrix4x4 matrices[4];
+			//matrices[3] = node->mTransformation;
+			//int index = 2;
+			//while (parent != NULL) {
+			//	matrices[index] = parent->mTransformation;
+			//	parent = parent->mParent;
+			//	index--;
+			//}
+			//aiMatrix4x4 worldMatrix = matrices[0];
+			//for (int i = 1; i < 4; i++)
+			//{
+			//	worldMatrix *= matrices[i];
+			//}
+			//footVec = aiVector3D(0, 0, 0);  ÕÒµØ·½µÄ
+			//footVec *= worldMatrix;
+			renderFoot();
+		}
+		else if (node->mName == aiString("RightUpArm") || node->mName == aiString("LeftUpArm")) {
+			renderUpArm();
+		}
+		else if (node->mName == aiString("RightHand") || node->mName == aiString("LeftHand")) {
+			renderHand();
+		}		
+		else if (node->mName == aiString("Neck")) {
+			renderNeck();
+		}
+		else if (node->mName == aiString("Head")) {
+			renderHead();
+		}
+		else
+		{
+			renderSkeleton(node);
 		}
 	}
 
@@ -141,7 +319,7 @@ void initialise()
 	gluPerspective(40, 1, 1.0, 500.0);
 
 	//---- Load the model ------
-	scene = aiImportFile("./src/models/Boxing.bvh", aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone);
+	scene = aiImportFile("./src/models/Dance.bvh", aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone);
 	if (scene == NULL) exit(1);
 	//printTreeInfo(scene->mRootNode);
 	//printAnimInfo(scene, 0);
@@ -264,6 +442,18 @@ void special(int key, int x, int y)
 }
 
 
+void keyboard(unsigned char key, int x, int y)
+{
+	switch (key) {
+	case ' ':
+		toggleAnimation = !toggleAnimation;
+		break;
+	}
+	glutPostRedisplay();
+}
+
+
+
 int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);
@@ -275,7 +465,7 @@ int main(int argc, char** argv)
 	glutDisplayFunc(display);
 	glutTimerFunc(timeStep, update, 0);
 	glutSpecialFunc(special);
-
+	glutKeyboardFunc(keyboard);
 
 	glutMainLoop();
 	aiReleaseImport(scene);
